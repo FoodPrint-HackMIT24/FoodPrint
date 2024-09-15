@@ -18,6 +18,50 @@ const videoConstraints = {
   // facingMode: { exact: "environment" }
 };
 
+function extractBase64Data(dataURL: string) {
+  // Check if the input is a valid string
+  if (typeof dataURL !== 'string') {
+    throw new Error('The provided data URL must be a string.');
+  }
+
+  // Find the index where the base64 data starts
+  const base64Index = dataURL.indexOf('base64,');
+  if (base64Index === -1) {
+    throw new Error('Invalid data URL: base64 information not found.');
+  }
+
+  // Extract and return the base64 encoded data
+  const base64Data = dataURL.substring(base64Index + 7); // 'base64,'.length === 7
+  return base64Data;
+}
+
+interface CarbonCost {
+  carbon_cost: number;
+  explanation: string;
+  red_flags: string[];
+  score: number;
+}
+
+async function postImage(argumentString: string) {
+  return fetch('http://127.0.0.1:8000/score_menu', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ image: argumentString })
+  })
+    .then(response => response.json())
+    .then(data => {
+      // The response is a list of items with the specified model
+      console.log(data);
+      return data as CarbonCost[]
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      return [] as CarbonCost[]
+    });
+}
+
 function App() {
   const webcamRef = useRef(null);
   // const capture = useCallback(
@@ -45,12 +89,11 @@ function App() {
     setTimeout(() => setCameraReady(true), 150)
   }, [])
 
-  const captureCallback = useCallback(() => {
-    // setShowCamera(false)
-    // setCameraReady(false)
+  const captureCallback = useCallback(async () => {
     const src = (webcamRef.current as any).getScreenshot();
     setImageSrc(src)
-
+    const res = await postImage(extractBase64Data(src))
+    console.log("got data", res)
   }, [])
 
   const closeCallback = useCallback(() => {

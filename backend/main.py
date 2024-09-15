@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -10,6 +10,13 @@ from models import requests, menus
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.post("/score_menu")
 def score_menu(request: requests.RequestBody):
     completion_message = openai_utils.calculate_score(request.image)
