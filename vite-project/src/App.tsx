@@ -45,7 +45,7 @@ interface CarbonCost {
 }
 
 async function postImage(argumentString: string) {
-  return fetch('https://b5bf-192-54-222-137.ngrok-free.app/score_menu', {
+  return fetch('https://4b87-192-54-222-137.ngrok-free.app/score_menu', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
