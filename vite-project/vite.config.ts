@@ -5,8 +5,8 @@ import react from '@vitejs/plugin-react'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), VitePWA({
-    registerType: 'prompt',
-    injectRegister: false,
+    registerType: 'autoUpdate',
+    injectRegister: "inline",
 
     pwaAssets: {
       disabled: false,
@@ -14,10 +14,30 @@ export default defineConfig({
     },
 
     manifest: {
-      name: 'vite-project',
-      short_name: 'vite-project',
-      description: 'vite-project',
+      name: 'FoodPrint',
+      short_name: 'FoodPrint',
+      description: 'description',
       theme_color: '#ffffff',
+      icons: [
+        {
+          src: 'apple_icon_2.png',
+          sizes: '256x256',
+          type: 'image/png'
+        },
+        {
+          src: 'apple_icon_1.png',
+          sizes: '512x512',
+          type: 'image/png'
+        }
+      ],
+      "screenshots": [
+        {
+          "src": "/apple_icon_1.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "label": "apple icon"
+        }
+      ]
     },
 
     workbox: {
