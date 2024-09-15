@@ -27,7 +27,7 @@ def score_menu(request: requests.RequestBody):
 
     menu_scored = []
 
-    for item in menu.choices[:3]:
+    for item in menu.choices:
         carbon_cost = openai_utils.calculate_carbon_cost(item.name)
         menu_scored.append(carbon_cost)
 

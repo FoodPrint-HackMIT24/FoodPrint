@@ -12,10 +12,12 @@ import { IoMdClose } from "react-icons/io";
 
 
 const videoConstraints = {
-  width: 720,
-  height: 1280,
-  facingMode: "user"
-  // facingMode: { exact: "environment" }
+  // width: 720,
+  // height: 1280,
+  // facingMode: "user"
+  // width: 1280,
+  // height: 720,
+  facingMode: { exact: "environment" }
 };
 
 function extractBase64Data(dataURL: string) {
@@ -37,14 +39,13 @@ function extractBase64Data(dataURL: string) {
 
 interface CarbonCost {
   carbon_cost: number;
-  explanation: string;
   red_flags: string[];
   score: number;
   item_name: string;
 }
 
 async function postImage(argumentString: string) {
-  return fetch('http://127.0.0.1:8000/score_menu', {
+  return fetch('https://b5bf-192-54-222-137.ngrok-free.app/score_menu', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -55,7 +56,7 @@ async function postImage(argumentString: string) {
     .then(data => {
       // The response is a list of items with the specified model
       console.log(data);
-      return data as CarbonCost[]
+      return data.item_list as CarbonCost[]
     })
     .catch(error => {
       console.error('Error:', error);
@@ -79,7 +80,6 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [data, setData] = useState<CarbonCost[] | undefined>(undefined);
 
-
   const onUserMedia = useCallback(() => {
     setTimeout(() => setCameraReady(true), 150)
   }, [])
@@ -98,6 +98,7 @@ function App() {
     setShowCamera(false)
     setCameraReady(false)
     setImageSrc(undefined)
+    setData(undefined)
   }, [])
 
   return (
@@ -118,12 +119,12 @@ function App() {
               },
               "animate": {
                 opacity: 1,
-                backgroundColor: "rgba(0,0,0,0.8)"
+                backgroundColor: "rgba(0,0,0,0.99)"
               }
             }}
             style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "32px", flexGrow: 1}}
             >
-              <IoMdClose style={{position: "absolute", top: "24px", right: "32px", height: "32px", width: "32px"}} onClick={closeCallback} />
+              <IoMdClose style={{position: "absolute", top: "24px", right: "32px", height: "32px", width: "32px", zIndex: 4}} onClick={closeCallback} />
             {(!cameraReady || isLoading) && <div
               style={{position: "absolute", left: "50%", top: "50%", transform: "translateX(-50%) translateY(-50%)"}}
               >
@@ -134,29 +135,37 @@ function App() {
                 loading
                 />
             </div>}
-            <div style={{borderRadius: "16px", zIndex: 2, width: "90vw", height: "160vw", overflow: "hidden"}}>
-            {!imageSrc && <Webcam
-              audio={false}
-              height={"100%"}
-              width={"100%"}
-              style={{opacity: cameraReady ? 1 : 0, transition: "opacity ease 200ms", zIndex: 2}}
-              onUserMedia={onUserMedia}
-              ref={webcamRef}
-              screenshotFormat="image/jpeg"
-              videoConstraints={videoConstraints}
-            />}
-            {imageSrc && 
-            <motion.div 
-            initial={{filter: "brightness(1)", width: "100%"}}
-            animate={{filter: ["brightness(1.4)", "brightness(1)"], width: "30%"}}
-            exit={{filter: "brightness(1)", width: "30%"}}
-            >
-              <img src={imageSrc} style={{zIndex: 2, height: "100%", width: "100%"}} />
+            <motion.div style={{marginTop: data ? "64px" : "0px", borderRadius: "16px", zIndex: 2, width: "90vw", height: data ? "95vh" : "160vw", overflow: "hidden", display: "flex", flexDirection: "column", transition: "height ease 200ms"}}>
+              {!imageSrc && <Webcam
+                audio={false}
+                height={"100%"}
+                width={"100%"}
+                style={{opacity: cameraReady ? 1 : 0, transition: "opacity ease 200ms", zIndex: 2}}
+                onUserMedia={onUserMedia}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+              />}
+              {!data && 
+              <motion.div
+                initial={{marginTop: "0px"}}
+                animate={{marginTop: "-100px"}}
+                exit={{marginTop: "0px"}}
+              >
+              {imageSrc && 
+                <motion.div 
+                initial={{filter: "brightness(1)", width: "100%"}}
+                animate={{filter: ["brightness(1.4)", "brightness(1)"], width: "30%"}}
+                exit={{filter: "brightness(1)", width: "30%"}}
+                >
+                  <img src={imageSrc} style={{zIndex: 2, height: "100%", width: "100%"}} />
+                </motion.div>
+              }
+              </motion.div>
+              }
+              {data && <CarbonCostList items={data} />}
             </motion.div>
-            
-            }
-            </div>
-            <button onClick={captureCallback} className='scan-menu-btn' style={{margin: "16px 0px", width: "90%"}}>Caputre</button>
+            {!data && <button onClick={captureCallback} className='scan-menu-btn' style={{margin: "16px 0px", width: "90%"}}>Caputre</button>}
           </motion.div>
         }
       </AnimatePresence>
@@ -230,5 +239,78 @@ const Mockup = () => {
       </>
   )
 }
+
+
+interface CarbonCostListProps {
+  items: CarbonCost[];
+}
+
+const CarbonCostList: React.FC<CarbonCostListProps> = ({ items }) => {
+  // Function to determine the color based on the score
+  const getScoreColor = (score: number): string => {
+    if (score >= 0 && score <= 3) {
+      return 'red';
+    } else if (score >= 4 && score <= 7) {
+      return 'yellow';
+    } else if (score >= 8 && score <= 10) {
+      return 'green';
+    } else {
+      return 'gray'; // Default color if score is out of range
+    }
+  };
+
+  return (
+    <div style={{overflow: "scroll", paddingRight: "12px"}}>
+      {items.map((item, index) => {
+        const color = getScoreColor(item.score);
+        return (
+          <div
+            key={index}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '1rem',
+              padding: '0.5rem',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              flexDirection: "column",
+              gap: "12px"
+            }}
+          >
+            {/* Left Side: Circle and Item Name */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: "32px", textAlign: "left", width: "100%" }}>
+              <h3 style={{ margin: 0, flexGrow: 1 }}>{item.item_name}</h3>
+              <div
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  marginRight: '1rem',
+                }}
+              ></div>
+            </div>
+
+            {/* Right Side: Red Flags */}
+            {item.red_flags.length > 0 && (
+              <p
+                style={{
+                  color: '#a94442',
+                  backgroundColor: '#f2dede',
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  margin: 0,
+                }}
+              >
+                {item.red_flags.join(', ')}
+              </p>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
 export default App
