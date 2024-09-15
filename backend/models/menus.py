@@ -8,6 +8,7 @@ class Menu(BaseModel):
     choices: list[MenuItem]
 
 class CarbonCost(BaseModel):
+    item_name: str
     carbon_cost: float
     explanation: str
     red_flags: list[str]
