@@ -62,9 +62,10 @@ def calculate_score(image: str):
 
 def calculate_carbon_cost(ingredient: str):
     system_prompt = f"""
-    You are a environmental expert designed to calculate the carbon cost of food items and explain the carbon cost of the food item in pounds.
-    Calculate the carbon cost of the food item in the message below and explain why the carbon cost is that value.
-    Also provide a list of red flags that indicate that the production of the food item involves unsustainable practices such as human rights violations in third world countries, animal welfare concerns, etc. Keep each red flag to a few words.
+    You are a environmental expert designed to calculate the carbon cost of food items in pounds.
+    Please estimate the carbon emissions in pounds for one serving of the food item in the prompt below.
+    Also, if applicable, provide red flags that indicate that the production of the food item involves unsustainable practices such as human rights violations in third world countries, animal welfare concerns, etc. Keep each red flag to a few words.
+    Only give a red flag if it is particularly unsustainable and not just a general concern - there should be 1 food item with a red flag per 10 food items.
     Finally, based on this information, provide a sustainability score for the food item on a scale of 1 to 10
     Also return the name of the food item provided in the prompt back in the response as the item name.
     """
@@ -79,7 +80,5 @@ def calculate_carbon_cost(ingredient: str):
         schema=menus.CarbonCost, include_raw=True)
     
     carbon_cost = runnable.invoke({"messages": chat_history.messages})
-    print(">>> openai calculated the carbon cost:")
-    print(carbon_cost)
 
     return carbon_cost["parsed"]
