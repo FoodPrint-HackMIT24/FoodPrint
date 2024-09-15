@@ -40,6 +40,7 @@ interface CarbonCost {
   explanation: string;
   red_flags: string[];
   score: number;
+  item_name: string;
 }
 
 async function postImage(argumentString: string) {
@@ -72,18 +73,12 @@ function App() {
   //   [webcamRef]
   // );
 
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [recentVisits, setRecentVisits] = useState<any[]>([]);
   const [showCamera, setShowCamera] = useState<boolean>(false);
   const [cameraReady, setCameraReady] = useState<boolean>(false);
   const [imageSrc, setImageSrc] = useState<string | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [data, setData] = useState<CarbonCost[] | undefined>(undefined);
 
-  useEffect(() => {
-    // Fetch data for restaurants and recent visits
-    // Placeholder data fetching functions
-    fetchRestaurants();
-    fetchRecentVisits();
-  }, []);
 
   const onUserMedia = useCallback(() => {
     setTimeout(() => setCameraReady(true), 150)
@@ -92,8 +87,11 @@ function App() {
   const captureCallback = useCallback(async () => {
     const src = (webcamRef.current as any).getScreenshot();
     setImageSrc(src)
+    setIsLoading(true)
     const res = await postImage(extractBase64Data(src))
+    setIsLoading(false)
     console.log("got data", res)
+    setData(res)
   }, [])
 
   const closeCallback = useCallback(() => {
@@ -101,26 +99,6 @@ function App() {
     setCameraReady(false)
     setImageSrc(undefined)
   }, [])
-
-  const fetchRestaurants = () => {
-    // Fetch nearby restaurants data
-    setRestaurants([
-      { name: 'The Pizza Place', rating: 4.5 },
-      { name: 'Wingin\'it', rating: 4.5 },
-      { name: 'The Burger Garden', rating: 4.9 },
-      { name: 'House of Dim Sum', rating: 4.6 },
-    ]);
-  };
-
-  const fetchRecentVisits = () => {
-    // Fetch recent visits data
-    setRecentVisits([
-      { name: 'Noodle House', rating: 4.2 },
-      { name: 'Green Curry', rating: 4.0 },
-      { name: 'Tsuki Ramen', rating: 4.4 },
-      { name: 'Sandwich Shop', rating: 3.9 },
-    ]);
-  };
 
   return (
     <div style={{display: "flex", padding: "12px", flexDirection: "column"}}>
@@ -146,7 +124,7 @@ function App() {
             style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "32px", flexGrow: 1}}
             >
               <IoMdClose style={{position: "absolute", top: "24px", right: "32px", height: "32px", width: "32px"}} onClick={closeCallback} />
-            {!cameraReady && <div
+            {(!cameraReady || isLoading) && <div
               style={{position: "absolute", left: "50%", top: "50%", transform: "translateX(-50%) translateY(-50%)"}}
               >
               <ClipLoader 
@@ -182,7 +160,52 @@ function App() {
           </motion.div>
         }
       </AnimatePresence>
-      <div className="search-bar">
+      <Mockup />
+      <button className="scan-menu-btn" style={{ width: '100%' }} onClick={() => {
+        setShowCamera(true)
+        setCameraReady(false)
+        }}>
+        Scan Menu
+      </button>
+      {/* <button onClick={capture}>Capture photo</button> */}
+    </div>
+  );
+}
+
+const Mockup = () => {
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [recentVisits, setRecentVisits] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch data for restaurants and recent visits
+    // Placeholder data fetching functions
+    fetchRestaurants();
+    fetchRecentVisits();
+  }, []);
+
+  const fetchRestaurants = () => {
+    // Fetch nearby restaurants data
+    setRestaurants([
+      { name: 'The Pizza Place', rating: 4.5 },
+      { name: 'Wingin\'it', rating: 4.5 },
+      { name: 'The Burger Garden', rating: 4.9 },
+      { name: 'House of Dim Sum', rating: 4.6 },
+    ]);
+  };
+
+  const fetchRecentVisits = () => {
+    // Fetch recent visits data
+    setRecentVisits([
+      { name: 'Noodle House', rating: 4.2 },
+      { name: 'Green Curry', rating: 4.0 },
+      { name: 'Tsuki Ramen', rating: 4.4 },
+      { name: 'Sandwich Shop', rating: 3.9 },
+    ]);
+  };
+
+  return (
+    <>
+    <div className="search-bar">
         <input type="text" placeholder="Search for restaurants or food" />
         <button>
           <FaMapLocationDot />
@@ -204,15 +227,8 @@ function App() {
           </div>
         ))}
       </div>
-      <button className="scan-menu-btn" style={{ width: '100%' }} onClick={() => {
-        setShowCamera(true)
-        setCameraReady(false)
-        }}>
-        Scan Menu
-      </button>
-      {/* <button onClick={capture}>Capture photo</button> */}
-    </div>
-  );
+      </>
+  )
 }
 
 export default App
